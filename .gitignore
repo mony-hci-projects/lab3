@@ -1,0 +1,8 @@
+__pycache__/
+database/
+imagenet/
+lib/
+uploads/
+static/result/
+*.pickle
+saved_features_recom.txt
