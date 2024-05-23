@@ -20,7 +20,7 @@ from scipy import ndimage
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
 from tensorflow.python.platform import gfile
-app = Flask(__name__, static_url_path = "")
+app = Flask(__name__, static_url_path = "")#, static_folder="./vue-template/dist")
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 auth = HTTPBasicAuth()
 
@@ -65,9 +65,9 @@ def upload_img():
         # if user does not select file, browser also
         # submit a empty part without filename
         if file.filename == '':
-           
             print('No selected file')
             return redirect(request.url)
+
         if file:# and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
@@ -76,18 +76,12 @@ def upload_img():
             os.remove(inputloc)
             image_path = "/result"
             image_list =[os.path.join(image_path, file) for file in os.listdir(result)
-                              if not file.startswith('.')]
+                if not file.startswith('.')]
             images = {
-			'image0':image_list[0],
-            'image1':image_list[1],	
-			'image2':image_list[2],	
-			'image3':image_list[3],	
-			'image4':image_list[4],	
-			'image5':image_list[5],	
-			'image6':image_list[6],	
-			'image7':image_list[7],	
-			'image8':image_list[8]
-		      }				
+                'images': []
+            }
+            for image in image_list:
+                images['images'].append(image)
             return jsonify(images)
 
 #==============================================================================================================================
@@ -97,8 +91,8 @@ def upload_img():
 #==============================================================================================================================
 @app.route("/")
 def main():
-    
-    return render_template("main.html")   
+    return app.send_static_file("index.html")
+    #return render_template("main.html")   
 if __name__ == '__main__':
     #app.run(debug = True, host= '0.0.0.0')
     app.run(debug = False, host= '127.0.0.1')

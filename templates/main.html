@@ -21,12 +21,17 @@
     <style>
     body {
       background: white;
+      width: 100%;
     }
 
-    #searchresults table {
+    #searchresults {
       background: white;
       border: 1px;
-      display: none;
+      width: 70%;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
     }
 
     .tdofimg {
@@ -70,10 +75,9 @@
     }
     function fun(){
       $('#load').show();
-      $("form").submit(function(evt){	 
-        //$('#loader-icon').show(); 
-
+      $("form").submit(function(evt){
         evt.preventDefault();
+        var searchresults = document.getElementById("searchresults");
 
         //$('#loader-icon').show();
         var formData = new FormData($(this)[0]);
@@ -92,17 +96,18 @@
             $('#load').hide();
             $('#row1').show();
             //$('#clear').show();
-            //console.log(response[1]);
-            //document.getElementById("predictedResult").innerHTML= response; 
-            document.getElementById("img0").src = response.image0;
-            document.getElementById("img1").src = response.image1;
-            document.getElementById("img2").src = response.image2;
-            document.getElementById("img3").src = response.image3;
-            document.getElementById("img4").src = response.image4;
-            document.getElementById("img5").src = response.image5;
-            document.getElementById("img6").src = response.image6;
-            document.getElementById("img7").src = response.image7;
-            document.getElementById("img8").src = response.image8;
+            $("#searchresults").empty();
+            for (var i = 0; /*i < 9 &&*/ i < response.images.length; i++) {
+              var new_img = document.createElement("img");
+              new_img.src = response.images[i];
+              new_img.alt = "Norway";
+
+              var img_div = document.createElement("div");
+              img_div.className = "tdofimg";
+              img_div.appendChild(new_img)
+
+              searchresults.appendChild(img_div);
+            }
             $('#table').show();
             $('#clear').show();
           }
@@ -141,7 +146,6 @@
               <input type="file" name="file" required onchange="myFunction()"/>
               <input type=submit value ="Search!" onclick="fun()">
               <span width="36em"></span>
-              <!--这么多空格是干嘛的？？？&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -->
             </form>
           </td>
           <td><b></b></td>
@@ -156,23 +160,6 @@
       <img id="load" src="/images/ajax-loader.gif" style="height:100px;weight:100px;display:none;" >
     </center>
     <div id="searchresults" class="container">
-      <table id="table" class="table"><tbody>
-        <tr>
-          <td class="tdofimg"><img id="img0" src="" alt="Norway"/></td>
-          <td class="tdofimg"><img id="img1" src="" alt="Norway"/></td>
-          <td class="tdofimg"><img id="img2" src="" alt="Norway"/></td>
-        </tr>
-        <tr>
-          <td class="tdofimg"><img id="img3" src="" alt="Norway"/></td>
-          <td class="tdofimg"><img id="img4" src="" alt="Norway"/></td>
-          <td class="tdofimg"><img id="img5" src="" alt="Norway"/></td>
-        </tr>
-        <tr>
-          <td class="tdofimg"><img id="img6" src="" alt="Norway"/></td>
-          <td class="tdofimg"><img id="img7" src="" alt="Norway"/></td>
-          <td class="tdofimg"><img id="img8" src="" alt="Norway"/></td>
-        </tr>
-      </tbody></table>
     </div>
   </body>
 </html>
