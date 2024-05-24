@@ -5,7 +5,8 @@ import router from "./router";
 
 import "./assets/main.css";
 
-const app = createApp(SearchEngine); //createApp(App);
+const app = createApp(SearchEngine);
+//const app = createApp(App);
 
 app.use(router);
 

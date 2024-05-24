@@ -36,26 +36,26 @@ MAX_NUM_IMAGES_PER_CLASS = 2 ** 27 - 1  # ~134M
 #show_neighbors(random.randint(0, len(extracted_features)), indices, neighbor_list)
 
 def get_top_k_similar(image_data, pred, pred_final, k):
-        print("total data",len(pred))
-        print(image_data.shape)
-        os.mkdir('static/result')
-        
-        # cosine calculates the cosine distance, not similiarity. Hence no need to reverse list
-        top_k_ind = np.argsort([cosine(image_data, pred_row)
-            for _, pred_row in enumerate(pred)
-            if cosine(image_data, pred_row) < 0.40])#[:k]
-        print(top_k_ind)
-        
-        for _, neighbor in enumerate(top_k_ind):
-            image = imread(pred_final[neighbor])
-            #timestr = datetime.now().strftime("%Y%m%d%H%M%S")
-            #name= timestr+"."+str(i)
-            name = pred_final[neighbor]
-            tokens = name.split("\\")
-            img_name = tokens[-1]
-            print(img_name)
-            name = 'static/result/'+img_name
-            imsave(name, image)
+    print("total data",len(pred))
+    print(image_data.shape)
+    os.mkdir('static/result')
+    
+    # cosine calculates the cosine distance, not similiarity. Hence no need to reverse list
+    top_k_ind = np.argsort([cosine(image_data, pred_row)
+        for _, pred_row in enumerate(pred)
+        if cosine(image_data, pred_row) < 0.40])#[:k]
+    print(top_k_ind)
+    
+    for _, neighbor in enumerate(top_k_ind):
+        image = imread(pred_final[neighbor])
+        #timestr = datetime.now().strftime("%Y%m%d%H%M%S")
+        #name= timestr+"."+str(i)
+        name = pred_final[neighbor]
+        tokens = name.split("\\")
+        img_name = tokens[-1]
+        print(img_name)
+        name = 'static/result/'+img_name
+        imsave(name, image)
 
                 
 def create_inception_graph():
@@ -86,19 +86,19 @@ def run_bottleneck_on_image(sess, image_data, image_data_tensor,
     return bottleneck_values
 
 def recommend(imagePath, extracted_features):
-        tf.reset_default_graph()
+    tf.reset_default_graph()
 
-        config = tf.ConfigProto(
-            device_count = {'GPU': 0}
-        )
+    config = tf.ConfigProto(
+        device_count = {'GPU': 0}
+    )
 
-        sess = tf.Session(config=config)
-        graph, bottleneck_tensor, jpeg_data_tensor, resized_image_tensor = (create_inception_graph())
-        image_data = gfile.FastGFile(imagePath, 'rb').read()
-        features = run_bottleneck_on_image(sess, image_data, jpeg_data_tensor, bottleneck_tensor)	
+    sess = tf.Session(config=config)
+    graph, bottleneck_tensor, jpeg_data_tensor, resized_image_tensor = (create_inception_graph())
+    image_data = gfile.FastGFile(imagePath, 'rb').read()
+    features = run_bottleneck_on_image(sess, image_data, jpeg_data_tensor, bottleneck_tensor)	
 
-        with open('neighbor_list_recom.pickle','rb') as f:
-            neighbor_list = pickle.load(f)
-        print("loaded images")
-        get_top_k_similar(features, extracted_features, neighbor_list, k=9)
+    with open('neighbor_list_recom.pickle','rb') as f:
+        neighbor_list = pickle.load(f)
+    print("loaded images")
+    get_top_k_similar(features, extracted_features, neighbor_list, k=9)
 
