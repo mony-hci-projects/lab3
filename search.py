@@ -38,22 +38,15 @@ MAX_NUM_IMAGES_PER_CLASS = 2 ** 27 - 1  # ~134M
 def get_top_k_similar(image_data, pred, pred_final, k):
         print("total data",len(pred))
         print(image_data.shape)
-        #for i in pred:
-        #print(i.shape)
-                #break
         os.mkdir('static/result')
         
-# cosine calculates the cosine distance, not similiarity. Hence no need to reverse list
-        top_k_ind = np.argsort([cosine(image_data, pred_row) \
-                            for ith_row, pred_row in enumerate(pred)])#[:k]
+        # cosine calculates the cosine distance, not similiarity. Hence no need to reverse list
+        top_k_ind = np.argsort([cosine(image_data, pred_row)
+            for _, pred_row in enumerate(pred)
+            if cosine(image_data, pred_row) < 0.40])#[:k]
         print(top_k_ind)
         
-        for i, neighbor in enumerate(top_k_ind):
-            dis = cosine(image_data, pred[neighbor])
-            print(dis, type(dis))
-            if cosine(image_data, pred[neighbor]) > 0.40:
-            #if i > 100:
-                break
+        for _, neighbor in enumerate(top_k_ind):
             image = imread(pred_final[neighbor])
             #timestr = datetime.now().strftime("%Y%m%d%H%M%S")
             #name= timestr+"."+str(i)
@@ -86,7 +79,6 @@ def create_inception_graph():
 
 def run_bottleneck_on_image(sess, image_data, image_data_tensor,
                             bottleneck_tensor):
- 
     bottleneck_values = sess.run(
             bottleneck_tensor,
             {image_data_tensor: image_data})
