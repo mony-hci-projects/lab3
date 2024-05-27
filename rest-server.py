@@ -14,22 +14,25 @@ import shutil
 import numpy as np
 from search import recommend
 import tarfile
-from datetime import datetime
+import time
 from scipy import ndimage
 import io
 from PIL import Image
 #from scipy.misc import imsave
 
 UPLOAD_FOLDER = 'uploads'
-RESULT = 'static/result'
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
 from tensorflow.python.platform import gfile
-app = Flask(__name__, static_url_path = "")#, static_folder="./vue-template/dist")
+app = Flask(__name__, static_url_path = "")
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 auth = HTTPBasicAuth()
 
+# 调试用代码
 app.jinja_env.auto_reload = True
 app.config['TEMPLATES_AUTO_RELOAD'] = True
+
+img_number = 0
+relevance = 0.4
 
 #==============================================================================================================================
 #                                                                                                                              
@@ -51,48 +54,34 @@ print("loaded extracted_features")
 
 def allowed_file(filename):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+       filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/imgUpload', methods=['GET', 'POST'])
 def upload_img():
     print("image upload")
-    #result = 'static/result'
-    if not gfile.Exists(RESULT):
-          os.mkdir(RESULT)
-    shutil.rmtree(RESULT)
  
     if request.method == 'POST' or request.method == 'GET':
         print(request.method)
         # check if the post request has the file part
         if 'file' not in request.files:
             print('No file part')
-            return redirect(request.url)
+            abort(400)
         
         file = request.files['file']
         print(file.filename)
-        # if user does not select file, browser also
-        # submit a empty part without filename
         if file.filename == '':
             print('No selected file')
-            return redirect(request.url)
+            abort(400)
 
         if file is None or file.filename is None or not allowed_file(file.filename):
             print("Invalid file")
-            return redirect(request.url)
+            abort(400)
 
         filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        inputloc = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        result_images = recommend(inputloc, extracted_features)
-        #os.remove(inputloc)
-        #image_path = "/result"
-        #image_list = [os.path.join(image_path, file)
-        #    for file in os.listdir(RESULT)
-        #    if not file.startswith('.')]
-        #images = { 'images': [] }
-        #for image in image_list:
-        #    images['images'].append(image)
-        #return jsonify(images)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], f"{time.strftime('%Y%m%d_%H%M%S')}.{filename.split('.')[-1]}")
+        file.save(filepath)
+        # 改用时间命名搜索用的图片，用于历史记录的查询
+        result_images = recommend(filepath, extracted_features, img_number, relevance)
         return jsonify({"images": result_images})
 
 @app.route('/images/<string:img_name>')
@@ -101,6 +90,12 @@ def getDatasetImage(img_name):
 
 @app.route('/newparameters')
 def changeSearchParameters():
+    if 'number' not in request.args or 'relevance' not in request.args:
+        print("Invalid parameter update request")
+        abort(400)
+    global img_number, relevance
+    img_number = int(request.args['number'])
+    relevance = (100 - int(request.args['relevance'])) / 100
     return 'hi'
 
 @app.route('/collect', methods = ["GET", "POST"])

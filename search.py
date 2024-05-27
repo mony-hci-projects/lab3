@@ -22,15 +22,18 @@ JPEG_DATA_TENSOR_NAME = 'DecodeJpeg/contents:0'
 RESIZED_INPUT_TENSOR_NAME = 'ResizeBilinear:0'
 MAX_NUM_IMAGES_PER_CLASS = 2 ** 27 - 1  # ~134M
 
-def get_top_k_similar(image_data, pred, pred_final, k=20, relevance=0.40):
+def get_top_k_similar(image_data, pred, pred_final, k, relevance=0.40):
     print("total data",len(pred))
     print(image_data.shape)
     os.mkdir('static/result')
     
     # cosine calculates the cosine distance, not similiarity. Hence no need to reverse list
+    print(k)
     top_k_ind = np.argsort([cosine(image_data, pred_row)
         for _, pred_row in enumerate(pred)
-        if cosine(image_data, pred_row) < relevance])#[:k]
+        if cosine(image_data, pred_row) < relevance])
+    if k != 0:
+        top_k_ind = top_k_ind[:k]
     print(top_k_ind)
     
     result_images = [
@@ -66,7 +69,8 @@ def run_bottleneck_on_image(sess, image_data, image_data_tensor, bottleneck_tens
     bottleneck_values = np.squeeze(bottleneck_values)
     return bottleneck_values
 
-def recommend(imagePath, extracted_features, img_number=20, relevance=0.40):
+# 约定 img_number 为 0 时不对结果数量进行限制
+def recommend(imagePath, extracted_features, img_number=0, relevance=0.40):
     tf.reset_default_graph()
 
     config = tf.ConfigProto(
@@ -82,5 +86,5 @@ def recommend(imagePath, extracted_features, img_number=20, relevance=0.40):
         neighbor_list = pickle.load(f)
     print("loaded images")
 
-    return get_top_k_similar(features, extracted_features, neighbor_list, k=img_number, relevance=relevance)
+    return get_top_k_similar(features, extracted_features, neighbor_list, img_number, relevance=relevance)
 

@@ -10,7 +10,8 @@ const display_clear = ref(false);
 const is_loading = ref(false);
 const is_error = ref(false);
 const error_prompt = ref("不支持的图片格式：仅支持 PNG，JPG 或 JPEG 格式的图片查询");
-const result_number = ref(10);
+const result_number = ref(0);
+const relevance = ref(60);
 
 const upload = ref<UploadInstance>();
 
@@ -21,7 +22,13 @@ const handleExceed: UploadProps['onExceed'] = (files) => {
   upload.value!.handleStart(file);
 }
 
-const submitUpload = () => {
+const submitUpload = async () => {
+  await axios
+    .get(`/newparameters?number=${result_number.value}&relevance=${relevance.value}`)
+    .then(response => {console.log(response);})
+    .catch(function (error) {
+      console.log(error);
+    });
   // BUG: 已查询图片或无图片时点击上传按钮，会出现加载图且无途径消除
   is_loading.value = true;
   upload.value!.submit();
@@ -39,6 +46,18 @@ const handleSuccess: UploadContentProps['onSuccess'] = (response) => {
 }
 
 const handleError = (response, file) => {
+  if (response.status === 500) {
+  }
+  switch (response.status) {
+    case 400:
+      error_prompt.value = "错误请求：可能是图片上传错误或上传了不支持的图片格式。本网站仅支持 PNG，JPG 或 JPEG 格式的图片查询";
+      break;
+    case 500:
+      error_prompt.value = "服务器出现错误，请稍后重试";
+      break;
+    default:
+      error_prompt.value = "未知错误，请稍后重试";
+  }
   is_loading.value = false;
   clear();
   is_error.value = true;
@@ -98,7 +117,8 @@ function collectImage(image) {
         <el-button class="ml-3" type="success" @click="submitUpload" round>
           上传至服务器
         </el-button>
-        <el-input-number v-model="result_number" :step="10" />
+        <br/><el-input-number v-model="relevance" :max="100" :min="40" :step="10" />
+        <br/><el-input-number v-model="result_number" :min="0" :step="20" />
         <template #tip>
           <div class="el-upload__tip">
             limit 1 file, new file will cover the old file.
