@@ -49,9 +49,6 @@ print("loaded extracted_features")
 #                                                                                                                              
 #==============================================================================================================================
 
-# 具体作用见 search.py 的 get_top_k_similar 函数
-current_img_map = {}
-
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -79,30 +76,32 @@ def upload_img():
             print('No selected file')
             return redirect(request.url)
 
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            inputloc = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            current_img_map, result_images = recommend(inputloc, extracted_features)
-            os.remove(inputloc)
-            image_path = "/result"
-            image_list = [os.path.join(image_path, file)
-                for file in os.listdir(RESULT)
-                if not file.startswith('.')]
-            images = { 'images': [] }
-            for image in image_list:
-                images['images'].append(image)
-            #return jsonify(images)
-            return jsonify({"images": result_images})
+        if file is None or file.filename is None or not allowed_file(file.filename):
+            print("Invalid file")
+            return redirect(request.url)
+
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        inputloc = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        result_images = recommend(inputloc, extracted_features)
+        #os.remove(inputloc)
+        #image_path = "/result"
+        #image_list = [os.path.join(image_path, file)
+        #    for file in os.listdir(RESULT)
+        #    if not file.startswith('.')]
+        #images = { 'images': [] }
+        #for image in image_list:
+        #    images['images'].append(image)
+        #return jsonify(images)
+        return jsonify({"images": result_images})
 
 @app.route('/images/<string:img_name>')
 def getDatasetImage(img_name):
     return send_file(f"./database/dataset/{img_name}", mimetype="image/jpeg")
-    #img_stream = ''
-    #with open(f"./database/dataset/{img_name}", 'rb') as img:
-    #    img_stream = img.read()
-    #    img_stream = base64.b64encode(img_stream).decode()
-    #return img_stream
+
+@app.route('/newparameters')
+def changeSearchParameters():
+    return 'hi'
 
 @app.route('/collect', methods = ["GET", "POST"])
 def collect():
@@ -110,7 +109,7 @@ def collect():
     result = request.files
     if 'image' not in request.args:
         print("Missed image")
-        return redirect(request.url)
+        return jsonify({"nothing": "none"})
     img = request.args['image']
     print(img)
     result = {img: img}
@@ -128,5 +127,4 @@ def main():
 
 if __name__ == '__main__':
     #app.run(debug = True, host= '127.0.0.1')
-    #app.run(debug = False, host= '127.0.0.1')
-    app.run(debug = False, host= '100.80.16.122')
+    app.run(debug = False, host= '127.0.0.1')

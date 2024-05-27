@@ -26,15 +26,15 @@ RESIZED_INPUT_TENSOR_NAME = 'ResizeBilinear:0'
 MAX_NUM_IMAGES_PER_CLASS = 2 ** 27 - 1  # ~134M
 
 def create_inception_graph():
-  """"Creates a graph from saved GraphDef file and returns a Graph object.
+  """
+  Creates a graph from saved GraphDef file and returns a Graph object.
 
   Returns:
     Graph holding the trained Inception network, and various tensors we'll be
     manipulating.
   """
   with tf.Session() as sess:
-    model_filename = os.path.join(
-        'imagenet', 'classify_image_graph_def.pb')
+    model_filename = os.path.join('imagenet', 'classify_image_graph_def.pb')
     with gfile.FastGFile(model_filename, 'rb') as f:
       graph_def = tf.GraphDef()
       graph_def.ParseFromString(f.read())
@@ -78,16 +78,14 @@ random.shuffle(all_files)
 num_images = 10000
 neighbor_list = all_files[:num_images]
 with open('neighbor_list_recom.pickle','wb') as f:
-        pickle.dump(neighbor_list,f)
+    pickle.dump(neighbor_list,f)
 print("saved neighbour list")
 
 extracted_features = np.ndarray((num_images, 2048))
 sess = tf.Session()
 graph, bottleneck_tensor, jpeg_data_tensor, resized_image_tensor = (create_inception_graph())	
 
-
 for i, filename in enumerate(neighbor_list):
-
     image_data = gfile.FastGFile(filename, 'rb').read()
     features = run_bottleneck_on_image(sess, image_data, jpeg_data_tensor, bottleneck_tensor)
 
@@ -96,12 +94,5 @@ for i, filename in enumerate(neighbor_list):
     if i % 250 == 0:
         print(i)
 
-
 np.savetxt("saved_features_recom.txt", extracted_features)
 print("saved exttracted features")
-
-
-
-
-
-

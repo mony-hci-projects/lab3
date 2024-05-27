@@ -3,13 +3,14 @@ import { ref } from "vue";
 import { genFileId } from "element-plus";
 import { Star } from "@element-plus/icons-vue";
 import axios from "axios";
-import type { UploadInstance, UploadProps, UploadRawFile } from "element-plus";
+import type { UploadInstance, UploadProps, UploadContentProps, UploadRawFile } from "element-plus";
 
 const images = ref([]);
 const display_clear = ref(false);
 const is_loading = ref(false);
 const is_error = ref(false);
 const error_prompt = ref("不支持的图片格式：仅支持 PNG，JPG 或 JPEG 格式的图片查询");
+const result_number = ref(10);
 
 const upload = ref<UploadInstance>();
 
@@ -21,11 +22,12 @@ const handleExceed: UploadProps['onExceed'] = (files) => {
 }
 
 const submitUpload = () => {
+  // BUG: 已查询图片或无图片时点击上传按钮，会出现加载图且无途径消除
   is_loading.value = true;
   upload.value!.submit();
 }
 
-const handleSuccess = (response) => {
+const handleSuccess: UploadContentProps['onSuccess'] = (response) => {
   // upload.value.clearFiles();
   images.value.length = 0;
   for (let i = 0; i < response.images.length; i++) {
@@ -52,36 +54,25 @@ function clear() {
   is_error.value = false;
 }
 
-const collectNewImage = async (image) => {
-  try {
-    const response = await axios.post("collect", image);
-    return response.data;
-  } catch (error) {
-    console.error(error);
-  }
-}
-
 function collectImage(image) {
   console.log(image);
   // JS 异步： https://segmentfault.com/a/1190000016788484
-  // https://cloud.tencent.com/developer/article/2299760
+  // 一个并不好用的示例： https://cloud.tencent.com/developer/article/2299760
   // GET 请求
-  (async () => {
-    try {
-      const response = await axios.get("/collect?image=" + image);
-      return response.data;
-    } catch (error) {
+  axios
+    .get(`/collect?image=${image}`)
+    .then(response => { console.log(response) })
+    .catch(function (error) {
       console.error(error);
-      console.log("over");
-    }
-  })().then(data => {
-      console.log(data);
-    })
+    });
 
   // POST 请求
-  collectNewImage({
-    image: image,
-  });
+  axios
+    .post("collect", { image: image })
+    .then(response => {console.log(response);})
+    .catch(function (error) {
+      console.log(error);
+    });
 }
 </script>
 
@@ -107,18 +98,19 @@ function collectImage(image) {
         <el-button class="ml-3" type="success" @click="submitUpload" round>
           上传至服务器
         </el-button>
+        <el-input-number v-model="result_number" :step="10" />
         <template #tip>
           <div class="el-upload__tip">
             limit 1 file, new file will cover the old file.
           </div>
         </template>
+        <div class="clear-button" v-if="display_clear">
+          <el-button type="danger" @click="clear()" round>清空搜索结果</el-button>
+        </div>
       </el-upload>
     </div>
     <div id="loader" v-if="is_loading">
       <img id="loader_gif" src="@/assets/ajax-loader.gif" />
-    </div>
-    <div class="clear-button" v-if="display_clear">
-      <el-button type="danger" @click="clear()" round>清空搜索结果</el-button>
     </div>
     <div id="searchresults" class="container" v-if="images.length > 0">
       <div id="resultscount">共搜索到 {{ images.length }} 条相关结果</div>

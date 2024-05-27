@@ -3,20 +3,13 @@
 # inputs: Input location of uploaded image, extracted vectors
 # 
 ################################################################################################################################
-import random
 import tensorflow.compat.v1 as tf
 import numpy as np
-from imageio import imsave, imread
 import os
-import scipy.io
-import time
-from datetime import datetime
 from scipy import ndimage
 from scipy.spatial.distance import cosine
 from sklearn.neighbors import NearestNeighbors
 import pickle 
-from PIL import Image
-import gc
 import os
 from tempfile import TemporaryFile
 from tensorflow.python.platform import gfile
@@ -29,9 +22,7 @@ JPEG_DATA_TENSOR_NAME = 'DecodeJpeg/contents:0'
 RESIZED_INPUT_TENSOR_NAME = 'ResizeBilinear:0'
 MAX_NUM_IMAGES_PER_CLASS = 2 ** 27 - 1  # ~134M
 
-#show_neighbors(random.randint(0, len(extracted_features)), indices, neighbor_list)
-
-def get_top_k_similar(image_data, pred, pred_final, k):
+def get_top_k_similar(image_data, pred, pred_final, k=20, relevance=0.40):
     print("total data",len(pred))
     print(image_data.shape)
     os.mkdir('static/result')
@@ -39,27 +30,13 @@ def get_top_k_similar(image_data, pred, pred_final, k):
     # cosine calculates the cosine distance, not similiarity. Hence no need to reverse list
     top_k_ind = np.argsort([cosine(image_data, pred_row)
         for _, pred_row in enumerate(pred)
-        if cosine(image_data, pred_row) < 0.40])#[:k]
+        if cosine(image_data, pred_row) < relevance])#[:k]
     print(top_k_ind)
     
-    # 用于存储发出图片名称与数据库图片名称的对应关系
-    # 发出图片名称会根据相关性排序重新命名，以确保发送时可以按相关性顺序发出
-    img_map = {}
-    result_images = []
-    for i, neighbor in enumerate(top_k_ind):
-        image = imread(pred_final[neighbor])
-        #timestr = datetime.now().strftime("%Y%m%d%H%M%S")
-        #name= timestr+"."+str(i)
-        name = pred_final[neighbor]
-        tokens = name.split("\\")
-        img_name = tokens[-1]
-        print(img_name)
-        #name = 'static/result/'+img_name
-        name = f"static/result/{i:05d}.{img_name.split('.')[-1]}"
-        img_map[name] = img_name
-        result_images.append(f"/images/{img_name}")
-        imsave(name, image)
-    return img_map, result_images
+    result_images = [
+        f"/images/{os.path.split(pred_final[neighbor])[1]}" for neighbor in top_k_ind
+    ]
+    return result_images
 
                 
 def create_inception_graph():
@@ -81,15 +58,15 @@ def create_inception_graph():
               RESIZED_INPUT_TENSOR_NAME]))
   return sess.graph, bottleneck_tensor, jpeg_data_tensor, resized_input_tensor
 
-def run_bottleneck_on_image(sess, image_data, image_data_tensor,
-                            bottleneck_tensor):
+def run_bottleneck_on_image(sess, image_data, image_data_tensor, bottleneck_tensor):
     bottleneck_values = sess.run(
-            bottleneck_tensor,
-            {image_data_tensor: image_data})
+        bottleneck_tensor,
+        {image_data_tensor: image_data}
+    )
     bottleneck_values = np.squeeze(bottleneck_values)
     return bottleneck_values
 
-def recommend(imagePath, extracted_features):
+def recommend(imagePath, extracted_features, img_number=20, relevance=0.40):
     tf.reset_default_graph()
 
     config = tf.ConfigProto(
@@ -104,5 +81,6 @@ def recommend(imagePath, extracted_features):
     with open('neighbor_list_recom.pickle','rb') as f:
         neighbor_list = pickle.load(f)
     print("loaded images")
-    return get_top_k_similar(features, extracted_features, neighbor_list, k=9)
+
+    return get_top_k_similar(features, extracted_features, neighbor_list, k=img_number, relevance=relevance)
 

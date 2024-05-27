@@ -13,7 +13,8 @@
     "jquery": "^3.7.1",
     "vue": "^3.2.45",
     "vue-router": "^4.1.6",
-    "axios": "^1.7.2"
+    "axios": "^1.7.2",
+    "vue-axios": "^3.5.2"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.1.4",
