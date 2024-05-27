@@ -3,42 +3,51 @@ import { RouterLink, RouterView } from "vue-router";
 </script>
 
 <template>
-  <header>
-    <h1>Image Search Engine Demo</h1>
-    <img
-      alt="logo"
-      class="logo"
-      src="@/assets/tju.ico"
-      width="32"
-      height="32"
-    />
-    <nav>
-      <RouterLink to="/">搜索</RouterLink>
-      <RouterLink to="/favorite">收藏</RouterLink>
-    </nav>
-  </header>
+  <el-container>
+    <el-header>
+      <img
+        alt="logo"
+        class="logo"
+        src="@/assets/tju.ico"
+        width="32"
+        height="32"
+      />
+      <h1>Image Search Engine Demo</h1>
+      <nav>
+        <RouterLink to="/">搜索</RouterLink>
+        <RouterLink to="/favorite">收藏</RouterLink>
+      </nav>
+    </el-header>
 
-  <RouterView />
+    <el-main>
+      <RouterView />
+    </el-main>
+  </el-container>
 </template>
 
 <style scoped>
 header {
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   line-height: 1.5;
   max-height: 100vh;
   margin-top: 1rem;
+  margin-bottom: 1rem;
 }
 
 .logo {
-  display: block;
-  margin: 1rem auto 1rem;
+  /*display: block;*/
+  margin: auto 1rem;
 }
 
 nav {
   width: 100%;
   font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
-  margin-bottom: 3rem;
+  /*text-align: center;*/
+  margin-top: 1rem;
 }
 
 nav a.router-link-exact-active {
@@ -57,5 +66,12 @@ nav a {
 
 nav a:first-of-type {
   border: 0;
+}
+
+@media (min-width: 1024px) {
+  main {
+    margin-left: 3rem;
+    width: 70%;
+  }
 }
 </style>

@@ -6,17 +6,13 @@
 import random
 import tensorflow.compat.v1 as tf
 import numpy as np
-import imageio
+from imageio import imsave, imread
 import os
 import scipy.io
 import time
 from datetime import datetime
 from scipy import ndimage
-#from scipy.misc import imsave
-imsave = imageio.imsave
-imread = imageio.imread
 from scipy.spatial.distance import cosine
-#import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors
 import pickle 
 from PIL import Image
@@ -46,7 +42,11 @@ def get_top_k_similar(image_data, pred, pred_final, k):
         if cosine(image_data, pred_row) < 0.40])#[:k]
     print(top_k_ind)
     
-    for _, neighbor in enumerate(top_k_ind):
+    # 用于存储发出图片名称与数据库图片名称的对应关系
+    # 发出图片名称会根据相关性排序重新命名，以确保发送时可以按相关性顺序发出
+    img_map = {}
+    result_images = []
+    for i, neighbor in enumerate(top_k_ind):
         image = imread(pred_final[neighbor])
         #timestr = datetime.now().strftime("%Y%m%d%H%M%S")
         #name= timestr+"."+str(i)
@@ -54,8 +54,12 @@ def get_top_k_similar(image_data, pred, pred_final, k):
         tokens = name.split("\\")
         img_name = tokens[-1]
         print(img_name)
-        name = 'static/result/'+img_name
+        #name = 'static/result/'+img_name
+        name = f"static/result/{i:05d}.{img_name.split('.')[-1]}"
+        img_map[name] = img_name
+        result_images.append(f"/images/{img_name}")
         imsave(name, image)
+    return img_map, result_images
 
                 
 def create_inception_graph():
@@ -100,5 +104,5 @@ def recommend(imagePath, extracted_features):
     with open('neighbor_list_recom.pickle','rb') as f:
         neighbor_list = pickle.load(f)
     print("loaded images")
-    get_top_k_similar(features, extracted_features, neighbor_list, k=9)
+    return get_top_k_similar(features, extracted_features, neighbor_list, k=9)
 
