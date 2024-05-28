@@ -14,7 +14,8 @@ import { RouterLink, RouterView } from "vue-router";
       />
       <h1>Image Search Engine Demo</h1>
       <nav>
-        <RouterLink to="/">搜索</RouterLink>
+        <RouterLink to="/">简单搜索</RouterLink>
+        <RouterLink to="/advance">高级搜索</RouterLink>
         <RouterLink to="/collection">收藏</RouterLink>
         <RouterLink to="/history">历史记录</RouterLink>
       </nav>

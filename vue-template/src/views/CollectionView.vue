@@ -21,7 +21,6 @@ const loadCollection = async () => {
 };
 
 const removeColletion = (image) => {
-  // TODO: 修改 static 目录地址
   axios
     .get(`/changeCollection?image=${image}&operation=remove`)
     .then((response) => {
@@ -40,26 +39,52 @@ onMounted(() => {
 
 <template>
   <div class="collections">
-    <el-space>
-      <el-card v-for="(image, index) in collections" :key="image.id">
-        <el-image
-          fit="contain"
-          :src="image"
-          :preview-src-list="collections"
-          :initial-index="index"
-        />
-        <el-button type="danger" @click="removeColletion(image)" round>
-          取消收藏
-        </el-button>
+    <el-space wrap>
+      <el-card
+        class="collection-card"
+        v-for="(image, index) in collections"
+        :key="image.id"
+      >
+        <div class="collection-div">
+          <el-image
+            class="collection-image"
+            fit="contain"
+            :src="image"
+            :preview-src-list="collections"
+            :initial-index="index"
+          />
+          <el-button type="danger" @click="removeColletion(image)" round>
+            取消收藏
+          </el-button>
+        </div>
       </el-card>
     </el-space>
-    <!-- TODO: 删除收藏 -->
   </div>
 </template>
 
 <style scoped>
-.collections {
-  display: flex;
-  flex-wrap: wrap;
+.collection-card {
+  background: var(--vt-c-white);
+  border: none;
+}
+
+.collection-div {
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: center;
+}
+
+.collection-image {
+  transition: 0.3s;
+  border-radius: 10px;
+  width: auto;
+  height: 200px;
+  margin-bottom: 1rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .collection-card {
+    background: var(--vt-c-black);
+  }
 }
 </style>

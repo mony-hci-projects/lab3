@@ -10,6 +10,10 @@ const router = createRouter({
       component: SearchView,
     },
     {
+      path: "/advance",
+      component: () => import("../views/AdvanceSearchView.vue"),
+    },
+    {
       path: "/collection",
       name: "collection",
       // route level code-splitting

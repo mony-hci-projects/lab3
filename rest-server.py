@@ -23,7 +23,7 @@ UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
 COLLECTION_FILE = './resource/collection.pickle'
 from tensorflow.python.platform import gfile
-app = Flask(__name__, static_url_path = "")
+app = Flask(__name__, static_url_path = "", static_folder="./vue-template/dist/")
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 auth = HTTPBasicAuth()
 
@@ -66,7 +66,7 @@ def getDatasetImage(img_name):
 
 @app.route('/history/<string:img_name>')
 def getHistoryImage(img_name):
-    filepath = f"./uploads/{img_name}"
+    filepath = f"./{app.config['UPLOAD_FOLDER']}/{img_name}"
     if not os.path.exists(filepath):
         abort(404)
     return send_file(filepath, mimetype="image/jpeg")
@@ -79,9 +79,11 @@ def upload_img():
         print(request.method)
         # check if the post request has the file part
         if 'file' not in request.files:
+            if request.args['image']:
+                return requery(request.args['image'])
             print('No file part')
             abort(400)
-        
+
         file = request.files['file']
         print(file.filename)
         if file.filename == '':
@@ -98,6 +100,13 @@ def upload_img():
         # 改用时间命名搜索用的图片，用于历史记录的查询
         result_images = recommend(filepath, extracted_features, img_number, relevance)
         return jsonify({"images": result_images})
+
+def requery(image_name):
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], image_name)
+    if not os.path.exists(filepath):
+        abort(404)
+    result_images = recommend(filepath, extracted_features, img_number, relevance)
+    return jsonify({"images": result_images})
 
 @app.route('/newparameters')
 def changeSearchParameters():
@@ -151,10 +160,28 @@ def getCollection():
 
 @app.route('/getHistory')
 def getHistory():
-    if not os.path.exists('./uploads'):
-        os.mkdir("uploads")
-    history = os.listdir('./uploads/')
+    if not os.path.exists(f'./{app.config["UPLOAD_FOLDER"]}'):
+        os.mkdir(app.config["UPLOAD_FOLDER"])
+    history = os.listdir(app.config["UPLOAD_FOLDER"])
     return jsonify({"history": history})
+
+@app.route('/removeHistory')
+def removeHistory():
+    print(request.method)
+    result = request.files
+    if 'image' not in request.args:
+        print("Missed image")
+        abort(400)
+
+    img = request.args['image']
+    if not os.path.exists(app.config["UPLOAD_FOLDER"]):
+        os.mkdir(app.config["UPLOAD_FOLDER"])
+
+    if not os.path.exists(f'./{app.config["UPLOAD_FOLDER"]}/{img}'):
+        abort(304)
+    else:
+        os.remove(f'./{app.config["UPLOAD_FOLDER"]}/{img}')
+        return getHistory()
 
 #==============================================================================================================================
 #                                                                                                                              
@@ -162,6 +189,9 @@ def getHistory():
 #                                                                                                                              
 #==============================================================================================================================
 @app.route("/")
+@app.route("/history")
+@app.route("/collection")
+@app.route("/advance")
 def main():
     return app.send_static_file("index.html")
     #return render_template("main.html")   

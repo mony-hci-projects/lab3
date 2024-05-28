@@ -136,6 +136,12 @@ onMounted(() => {
             limit 1 file, new file will cover the old file.
           </div>
         </template>
+        <div>
+          搜索结果相关性：<el-input-number v-model="relevance" :max="100" :min="40" :step="10" />
+        </div>
+        <div>
+          搜索结果数量限制：<el-input-number v-model="result_number" :min="0" :step="20" />（数量为零时不对搜索结果数量进行限制）
+        </div>
         <div class="clear-button" v-if="display_clear">
           <el-button type="danger" @click="clear()" round>清空搜索结果</el-button>
         </div>
