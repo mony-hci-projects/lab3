@@ -7,9 +7,9 @@
 ################################################################################################################################
 from flask import Flask, jsonify, abort, request, make_response, send_file, url_for,redirect, render_template
 from flask_httpauth import HTTPBasicAuth
-from scipy.sparse import base
 from werkzeug.utils import secure_filename
 import os
+import pickle
 import shutil 
 import numpy as np
 from search import recommend
@@ -18,10 +18,10 @@ import time
 from scipy import ndimage
 import io
 from PIL import Image
-#from scipy.misc import imsave
 
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
+COLLECTION_FILE = './resource/collection.pickle'
 from tensorflow.python.platform import gfile
 app = Flask(__name__, static_url_path = "")
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -56,6 +56,21 @@ def allowed_file(filename):
     return '.' in filename and \
        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# 为图库图片链接提供接入点
+@app.route('/images/<string:img_name>')
+def getDatasetImage(img_name):
+    filepath = f"./database/dataset/{img_name}"
+    if not os.path.exists(filepath):
+        abort(404)
+    return send_file(filepath, mimetype="image/jpeg")
+
+@app.route('/history/<string:img_name>')
+def getHistoryImage(img_name):
+    filepath = f"./uploads/{img_name}"
+    if not os.path.exists(filepath):
+        abort(404)
+    return send_file(filepath, mimetype="image/jpeg")
+
 @app.route('/imgUpload', methods=['GET', 'POST'])
 def upload_img():
     print("image upload")
@@ -84,10 +99,6 @@ def upload_img():
         result_images = recommend(filepath, extracted_features, img_number, relevance)
         return jsonify({"images": result_images})
 
-@app.route('/images/<string:img_name>')
-def getDatasetImage(img_name):
-    return send_file(f"./database/dataset/{img_name}", mimetype="image/jpeg")
-
 @app.route('/newparameters')
 def changeSearchParameters():
     if 'number' not in request.args or 'relevance' not in request.args:
@@ -98,17 +109,52 @@ def changeSearchParameters():
     relevance = (100 - int(request.args['relevance'])) / 100
     return 'hi'
 
-@app.route('/collect', methods = ["GET", "POST"])
+@app.route('/changeCollection', methods = ["GET", "POST"])
 def collect():
     print(request.method)
     result = request.files
     if 'image' not in request.args:
         print("Missed image")
-        return jsonify({"nothing": "none"})
+        abort(400)
+    if 'operation' not in request.args:
+        print("Missed operation")
+        abort(400)
+        #return jsonify({"nothing": "none"})
+
+    if not os.path.exists(COLLECTION_FILE):
+        with open(COLLECTION_FILE, 'wb') as f:
+            pickle.dump([], f)
+
+    with open(COLLECTION_FILE, 'rb') as f:
+        collection = pickle.load(f)
     img = request.args['image']
-    print(img)
-    result = {img: img}
+    if img in collection and request.args['operation'] == 'remove':
+        print(f'Remove collection {img}')
+        collection.remove(img)
+        result = {"operate": "remove"}
+    elif request.args['operation'] == 'new':
+        print(f'Add collection {img}')
+        collection.add(img)
+        result = {"operate": "add"}
+    with open(COLLECTION_FILE, 'wb') as f:
+        pickle.dump(collection, f)
     return jsonify(result)
+
+@app.route('/getCollection')
+def getCollection():
+    if os.path.exists(COLLECTION_FILE):
+        with open(COLLECTION_FILE, 'rb') as f:
+            collection = list(pickle.load(f))
+    else:
+        collection = []
+    return jsonify({"collection": collection})
+
+@app.route('/getHistory')
+def getHistory():
+    if not os.path.exists('./uploads'):
+        os.mkdir("uploads")
+    history = os.listdir('./uploads/')
+    return jsonify({"history": history})
 
 #==============================================================================================================================
 #                                                                                                                              

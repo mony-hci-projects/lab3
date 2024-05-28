@@ -25,7 +25,6 @@ MAX_NUM_IMAGES_PER_CLASS = 2 ** 27 - 1  # ~134M
 def get_top_k_similar(image_data, pred, pred_final, k, relevance=0.40):
     print("total data",len(pred))
     print(image_data.shape)
-    os.mkdir('static/result')
     
     # cosine calculates the cosine distance, not similiarity. Hence no need to reverse list
     print(k)

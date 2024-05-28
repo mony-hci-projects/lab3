@@ -46,8 +46,6 @@ const handleSuccess: UploadContentProps['onSuccess'] = (response) => {
 }
 
 const handleError = (response, file) => {
-  if (response.status === 500) {
-  }
   switch (response.status) {
     case 400:
       error_prompt.value = "错误请求：可能是图片上传错误或上传了不支持的图片格式。本网站仅支持 PNG，JPG 或 JPEG 格式的图片查询";
@@ -79,28 +77,22 @@ function collectImage(image) {
   // 一个并不好用的示例： https://cloud.tencent.com/developer/article/2299760
   // GET 请求
   axios
-    .get(`/collect?image=${image}`)
-    .then(response => { console.log(response) })
+    .get(`/changeCollection?image=${image}&operation=new`)
+    .then((response) => {
+      console.log(response);
+    })
     .catch(function (error) {
       console.error(error);
-    });
-
-  // POST 请求
-  axios
-    .post("collect", { image: image })
-    .then(response => {console.log(response);})
-    .catch(function (error) {
-      console.log(error);
     });
 }
 </script>
 
 <template>
   <div>
-    <div id="main" class="container">
+    <div class="container">
       <el-upload
         ref="upload"
-        class="upload-demo"
+        class="upload-box"
         action="imgUpload"
         :limit="1"
         :auto-upload="false"
@@ -113,12 +105,16 @@ function collectImage(image) {
         <template #trigger>
           <el-button type="primary" round>选择一个文件</el-button>
         </template>
-        <span v-for="i in 10" :key="i">&nbsp;</span>
+        <!--<span v-for="i in 10" :key="i">&nbsp;</span>-->
         <el-button class="ml-3" type="success" @click="submitUpload" round>
           上传至服务器
         </el-button>
-        <br/><el-input-number v-model="relevance" :max="100" :min="40" :step="10" />
-        <br/><el-input-number v-model="result_number" :min="0" :step="20" />
+        <div>
+          搜索结果相关性：<el-input-number v-model="relevance" :max="100" :min="40" :step="10" />
+        </div>
+        <div>
+          搜索结果数量限制：<el-input-number v-model="result_number" :min="0" :step="20" />
+        </div>
         <template #tip>
           <div class="el-upload__tip">
             limit 1 file, new file will cover the old file.
@@ -135,11 +131,7 @@ function collectImage(image) {
     <div id="searchresults" class="container" v-if="images.length > 0">
       <div id="resultscount">共搜索到 {{ images.length }} 条相关结果</div>
       <div class="results">
-        <div
-          class="result-div"
-          v-for="(image, index) in images"
-          :key="image.id"
-        >
+        <div class="result-div" v-for="(image, index) in images" :key="image.id">
           <el-image
             class="result-image"
             fit="contain"
@@ -147,7 +139,6 @@ function collectImage(image) {
             :preview-src-list="images"
             :initial-index="index"
           />
-          <!--@contextmenu.prevent="console.log('clicked')"-->
           <el-button
             class="collect-button"
             type="warning"
@@ -167,6 +158,10 @@ function collectImage(image) {
 <style scoped>
 .container {
   display: block;
+}
+
+.upload-box div, .upload-box button {
+  margin: 0.5em 1em;
 }
 
 .results {

@@ -15,7 +15,8 @@ import { RouterLink, RouterView } from "vue-router";
       <h1>Image Search Engine Demo</h1>
       <nav>
         <RouterLink to="/">搜索</RouterLink>
-        <RouterLink to="/favorite">收藏</RouterLink>
+        <RouterLink to="/collection">收藏</RouterLink>
+        <RouterLink to="/history">历史记录</RouterLink>
       </nav>
     </el-header>
 
@@ -46,8 +47,8 @@ header {
 nav {
   width: 100%;
   font-size: 12px;
-  /*text-align: center;*/
   margin-top: 1rem;
+  margin-left: 3rem;
 }
 
 nav a.router-link-exact-active {
@@ -70,8 +71,8 @@ nav a:first-of-type {
 
 @media (min-width: 1024px) {
   main {
-    margin-left: 3rem;
-    width: 70%;
+    margin: 2rem 2rem;
+    width: 80%;
   }
 }
 </style>
