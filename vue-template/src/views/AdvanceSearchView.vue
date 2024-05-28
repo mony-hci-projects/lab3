@@ -129,7 +129,7 @@ onMounted(() => {
         </template>
         <!--<span v-for="i in 10" :key="i">&nbsp;</span>-->
         <el-button class="ml-3" type="success" @click="submitUpload" round>
-          上传至服务器
+          搜索相关图片
         </el-button>
         <template #tip>
           <div class="el-upload__tip">
