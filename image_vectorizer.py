@@ -9,10 +9,6 @@ import tensorflow.compat.v1 as tf
 #tf.disable_v2_behavior()
 import numpy as np
 import os
-#from scipy import ndimage
-#from scipy.spatial.distance import cosine
-#import matplotlib.pyplot as plt
-#from sklearn.neighbors import NearestNeighbors
 import pickle
 from tensorflow.python.platform import gfile
 

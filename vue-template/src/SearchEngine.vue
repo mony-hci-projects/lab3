@@ -12,7 +12,7 @@ import { RouterLink, RouterView } from "vue-router";
         width="32"
         height="32"
       />
-      <h1>Image Search Engine Demo</h1>
+      <h1>A Simple Image Search System</h1>
       <nav>
         <RouterLink to="/">简单搜索</RouterLink>
         <RouterLink to="/advance">高级搜索</RouterLink>

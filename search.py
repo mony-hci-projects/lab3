@@ -6,7 +6,6 @@
 import tensorflow.compat.v1 as tf
 import numpy as np
 import os
-from scipy import ndimage
 from scipy.spatial.distance import cosine
 from sklearn.neighbors import NearestNeighbors
 import pickle 

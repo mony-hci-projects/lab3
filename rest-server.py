@@ -5,17 +5,14 @@
 # here as json and being branched out to each projects. Basic level of validation is also being done in this file. #
 #-------------------------------------------------------------------------------------------------------------------------------
 ################################################################################################################################
-from flask import Flask, jsonify, abort, request, make_response, send_file, url_for,redirect, render_template
+from flask import Flask, jsonify, abort, request, send_file
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.utils import secure_filename
 import os
 import pickle
-import shutil 
 import numpy as np
 from search import recommend
-import tarfile
 import time
-from scipy import ndimage
 import io
 from PIL import Image
 
@@ -27,18 +24,19 @@ app = Flask(__name__, static_url_path = "", static_folder="./vue-template/dist/"
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 auth = HTTPBasicAuth()
 
-# 调试用代码
-app.jinja_env.auto_reload = True
-app.config['TEMPLATES_AUTO_RELOAD'] = True
+# 调试用代码，用于热重载前端代码
+# app.jinja_env.auto_reload = True
+# app.config['TEMPLATES_AUTO_RELOAD'] = True
 
+# 搜索时使用的相关属性
 img_number = 0
 relevance = 0.4
 
-#==============================================================================================================================
-#                                                                                                                              
-#    Loading the extracted feature vectors for image retrieval                                                                 
-#                                                                                                                              
-#==============================================================================================================================
+#================================#
+#                                #
+# 加载图片检索所需的提取特征向量 #
+#                                #
+#================================#
 extracted_features=np.zeros((10000,2048),dtype=np.float32)
 with open('saved_features_recom.txt') as f:
     for i,line in enumerate(f):
@@ -46,12 +44,13 @@ with open('saved_features_recom.txt') as f:
 print("loaded extracted_features") 
 
 
-#==============================================================================================================================
-#                                                                                                                              
-#  This function is used to do the image search/image retrieval
-#                                                                                                                              
-#==============================================================================================================================
+#========================#
+#                        #
+# 检索系统所需的辅助函数 #
+#                        #
+#========================#
 
+# 检查是否是支持的文件格式
 def allowed_file(filename):
     return '.' in filename and \
        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -64,6 +63,7 @@ def getDatasetImage(img_name):
         abort(404)
     return send_file(filepath, mimetype="image/jpeg")
 
+# 为历史记录图片提供接入点
 @app.route('/history/<string:img_name>')
 def getHistoryImage(img_name):
     filepath = f"./{app.config['UPLOAD_FOLDER']}/{img_name}"
@@ -71,10 +71,16 @@ def getHistoryImage(img_name):
         abort(404)
     return send_file(filepath, mimetype="image/jpeg")
 
+#==================#
+#                  #
+# 图片检索相关实现 #
+#                  #
+#==================#
+
 @app.route('/imgUpload', methods=['GET', 'POST'])
 def upload_img():
     print("image upload")
- 
+
     if request.method == 'POST' or request.method == 'GET':
         print(request.method)
         # check if the post request has the file part
@@ -95,12 +101,14 @@ def upload_img():
             abort(400)
 
         filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], f"{time.strftime('%Y%m%d_%H%M%S')}.{filename.split('.')[-1]}")
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'],
+                                f"{time.strftime('%Y%m%d_%H%M%S')}.{filename.split('.')[-1]}")
         file.save(filepath)
         # 改用时间命名搜索用的图片，用于历史记录的查询
         result_images = recommend(filepath, extracted_features, img_number, relevance)
         return jsonify({"images": result_images})
 
+# 用于使用历史记录进行查询
 def requery(image_name):
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], image_name)
     if not os.path.exists(filepath):
@@ -108,6 +116,7 @@ def requery(image_name):
     result_images = recommend(filepath, extracted_features, img_number, relevance)
     return jsonify({"images": result_images})
 
+# 更新检索使用的相关参数
 @app.route('/newparameters')
 def changeSearchParameters():
     if 'number' not in request.args or 'relevance' not in request.args:
@@ -118,6 +127,13 @@ def changeSearchParameters():
     relevance = (100 - int(request.args['relevance'])) / 100
     return 'hi'
 
+#==================#
+#                  #
+# 辅助功能相关实现 #
+#                  #
+#==================#
+
+# 新增/删除收藏
 @app.route('/changeCollection', methods = ["GET", "POST"])
 def collect():
     print(request.method)
@@ -149,6 +165,7 @@ def collect():
         pickle.dump(collection, f)
     return jsonify(result)
 
+# 获取收藏图片
 @app.route('/getCollection')
 def getCollection():
     if os.path.exists(COLLECTION_FILE):
@@ -158,6 +175,7 @@ def getCollection():
         collection = []
     return jsonify({"collection": collection})
 
+# 获取历史记录
 @app.route('/getHistory')
 def getHistory():
     if not os.path.exists(f'./{app.config["UPLOAD_FOLDER"]}'):
@@ -165,6 +183,7 @@ def getHistory():
     history = os.listdir(app.config["UPLOAD_FOLDER"])
     return jsonify({"history": history})
 
+# 删除历史记录
 @app.route('/removeHistory')
 def removeHistory():
     print(request.method)
@@ -183,18 +202,19 @@ def removeHistory():
         os.remove(f'./{app.config["UPLOAD_FOLDER"]}/{img}')
         return getHistory()
 
-#==============================================================================================================================
-#                                                                                                                              
-#                                           Main function                                                       	            #						     									       
-#                                                                                                                              
-#==============================================================================================================================
+#========#
+#        #
+# 主函数 #
+#        #
+#========#
+
+# 各界面挂载至 index.html，后续由 vue-router 进行路由
 @app.route("/")
 @app.route("/history")
 @app.route("/collection")
 @app.route("/advance")
 def main():
     return app.send_static_file("index.html")
-    #return render_template("main.html")   
 
 if __name__ == '__main__':
     #app.run(debug = True, host= '127.0.0.1')
